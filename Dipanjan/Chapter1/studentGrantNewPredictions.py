@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.externals import joblib
 import os
-from numpy import array
+from numyp import array
 
 model = joblib.load(r'Model/model.pickle')
 scaler = joblib.load(r'Scaler/scaler.pickle')
