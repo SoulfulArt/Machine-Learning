@@ -3,7 +3,6 @@ from numpy import array
 from numpy import sum
 from numpy import mean
 from numpy import count_nonzero
-from numpy import unique
 from pandas import isnull
 from MySQLdb import connect
 from getpass import getpass
@@ -12,11 +11,8 @@ from pandas import to_datetime
 from pandas import cut
 from pandas import get_dummies
 from pandas import concat
-from pandas import DataFrame
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import LabelEncoder
-from sklearn.feature_extraction import FeatureHasher
-from sklearn.feature_selection import VarianceThreshold
 
 db = connect(host = 'localhost', user = 'root', passwd = 'P@ul0M3l0!@#', database = 'dataScienceDB')
 
@@ -24,18 +20,23 @@ sqlCommand = """SELECT * FROM pokemon"""
 
 pokemonDF = read_sql_query(sqlCommand, db)
 
-unique_type1 = unique(pokemonDF['type1'])
+n_bins = 10
+interval = (max(pokemonDF['speed']) - min(pokemonDF['speed']))/n_bins
+bin_range = []
 
-fh = FeatureHasher(n_features = 2, input_type = 'string')
-hash_feat = fh.fit_transform(pokemonDF['type1'])
-hash_feat = hash_feat.toarray()
+bin_names = [i for i in range (0, n_bins)]
 
-pokegen = get_dummies(pokemonDF['gen'])
+for i in range (0, int(max(pokemonDF['speed'])), int(interval)):
+	bin_range.append(i)
 
-vt = VarianceThreshold(threshold = 0.161)
+pokemonDF['speed_bin_ranges'] = cut(array(pokemonDF['speed']), bins = bin_range)
 
-vt.fit(pokegen)
+pokemonDF['speed_bin_level'] = cut(array(pokemonDF['speed']), bins = bin_range, labels = bin_names)
 
-poke_gen_subset = pokegen.iloc[:,vt.get_support()]
+gle = LabelEncoder()
+gen_labels = gle.fit_transform(pokemonDF['leg'])
 
-print(poke_gen_subset)
+pokemonDF['codedLeg'] = gen_labels
+
+gen_onehot_feature = get_dummies(pokemonDF['gen'])
+print(concat([pokemonDF[['name', 'gen']], gen_onehot_feature], axis = 1))
